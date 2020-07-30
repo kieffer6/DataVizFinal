@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html>
+
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<style> circle {fill: lightblue; stroke: black;} 
+</style>
+
+<body onload='init()'>
+
+    <h1> <center>Finding Your Dream Car</center></h1>
+    <p1>&nbsp &nbsp &nbsp &nbsp When you are in the market for a car, the first thought that might go through your mind is
+        "I want to go fast."  In general, cars with more cylinders produce more power.  So you may think,
+        "I want as many cyinders as I can" until you see the fuel efficiency of said car. In general, 
+        cars with more cylinders are also less fuel efficient.
+    </p1>
+    <p></p>
+    <p></p>
+
+<!-- Initialize tooltip -->
+<div id="tooltip"></div>
+
+<!-- Initialize a select button -->
+<p> &nbsp <strong>Cylinder Selection: </strong><select id="selectButton"></select></strong>
+
+<p></p>
+
+<!-- Initialize annotation -->
+<div id="annotation"></div>
+
+<!-- graph div -->
+<div id="my_dataviz"></div>
+
+<p>Once you have selected how many cylinders you want in your dream car, 
+    click the "Next" button below to explore fuel types.</p>
+
+<!-- slide advance -->
+    &nbsp<button onclick="window.location.href='SecondSlide.html';">Next</button>
+
+<script>
+
+async function init() {
+//Solution Code: 
+    const data = await d3.csv(
+     'https://flunky.github.io/cars2017.csv');
+    
+// set the dimensions and margins of the graph
+var margin = {top: 20, right: 20, bottom: 50, left: 70},
+    width = 900 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+//Tooltip
+var tooltip = d3.select("#tooltip")
+    .append("div")
+    .style("opacity", 0)
+    .attr("class", "tooltip")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "10px")
+    .style("position", "absolute")
+
+var mouseover = function(d) {
+    tooltip
+        .style("opacity",1)
+        .style("left", (d3.mouse(this)[0]) + 20 + "px")
+        .style("top", (d3.mouse(this)[1]) + 50 + "px")
+        .html("Make: " + d.Make + "<br />" + "Fuel type: " + d.Fuel + "<br />" + 
+        "Hwy MPG: " + d.AverageHighwayMPG + "<br />" + "City MPG: " + d.AverageCityMPG)
+    }
+
+var mouseout = function(d) {
+    tooltip
+      .style("opacity", 0)
+}
+
+//Graph Annotation
+var selectedGroup = 0;
+var datafilter = data.filter(function(d){return d.EngineCylinders == selectedGroup;})
+var avgCity = d3.mean(datafilter, function(d) {return +d.AverageCityMPG})
+var avgHywy = d3.mean(datafilter, function(d) {return +d.AverageHighwayMPG})
+
+var annotation = d3.select("#annotation")
+    .style("opacity", 1)
+    .style("left", 550 + "px")
+    .style("top", 400 + "px")
+    .attr("class", "annotation")
+    .style("background-color", "lightblue")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "10px")
+    .style("position", "absolute")
+    .html("<strong> Averages of all cars"+ "<br />" + "with " + selectedGroup + " cylinders: </strong>" + "<br />" + "<br />" +
+        "City MPG:    " + d3.format(",.0f")(avgCity)+ "<br />" +
+        "Highway MPG: " + d3.format(",.0f")(avgHywy))
+
+//function that updates the annotation
+function updateannotation(selectedGroup){
+
+var datafilter = data.filter(function(d){return d.EngineCylinders == selectedGroup;})
+
+var avgCity = d3.mean(datafilter, function(d) {return +d.AverageCityMPG})
+var avgHywy = d3.mean(datafilter, function(d) {return +d.AverageHighwayMPG})
+
+var annotation = d3.select("#annotation")
+    .html("<strong> Averages of all cars"+ "<br />" + "with " + selectedGroup + " cylinders: </strong>" + "<br />" + "<br />" +
+        "City MPG:    " + d3.format(",.0f")(avgCity)+ "<br />" +
+        "Highway MPG: " + d3.format(",.0f")(avgHywy))
+
+}
+
+// List of cylinders for dropdown
+var allGroup = d3.map(data, function(d){return(d.EngineCylinders)}).keys()
+
+// add the options to the dropdown
+d3.select("#selectButton")
+    .selectAll('myOptions')
+    .data(allGroup.sort((a,b) => a-b))
+    .enter()
+    .append('option')
+    .text(function (d) { return d; })
+    .attr("value", function (d) { return d; })
+
+//scale data
+var x = d3.scaleLog().domain([10,150]).range([0,width]);
+var y = d3.scaleLog().domain([10,150]).range([height,0]);
+var logScalex = d3.scaleLog()
+	.domain([10, 150])
+	.range([0, width]);
+var logScaley = d3.scaleLog()
+	.domain([10, 150])
+	.range([height,0]);
+
+//initate graph vars
+var datafilter = data.filter(function(d){return d.EngineCylinders == selectedGroup;})
+
+//draw initial graph
+var graph = svg
+        .selectAll("circle")
+        .data(datafilter)
+        .enter()
+        .append("circle")
+            .attr("cx",function(d,i){return logScalex(d.AverageCityMPG);})
+            .attr("cy",function(d,i) {return logScaley(d.AverageHighwayMPG);})
+            .attr("r",function(d,i) {return 2 + d.EngineCylinders * 1;})
+            //**not working .attr("fill", d3.scaleLinear().domain(10,150).range(["red","green"]))
+        .on("mouseover",mouseover)
+        .on("mouseout",mouseout)
+
+//x axis
+d3.select("svg").append("g")
+    .attr("transform","translate("+margin.left+","+(height+10)+")")
+    .call(d3.axisBottom(x)
+        .tickValues([10,20,50,100])
+        .tickFormat(d3.format("~s")));
+//x axis label
+d3.select("svg").append("text")
+    .attr("transform",
+            "translate(" + (width/2+20) + " ," + 
+                           (height + margin.top + 20) + ")")
+      .style("text-anchor", "middle")
+      .text("Average City MPG");
+// y axis labels
+d3.select("svg").append("g")
+    .attr("transform","translate("+margin.left+",10)")
+    .call(d3.axisLeft(y)
+        .tickValues([10,20,50,100])
+        .tickFormat(d3.format("~s")));
+//y axis label
+d3.select("svg").append("text")
+    .attr("transform", "rotate(-90)")
+        .attr("y", "+margin.left+")
+        .attr("x",0-(height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Average Highway MPG");    
+
+//funciton that updates chart
+function update(selectedGroup){
+    //remove old datapoints
+        svg.selectAll("circle")
+        .data(data)
+        .remove()
+
+    var datafilter = data.filter(function(d){return d.EngineCylinders == selectedGroup;})
+
+    var graph = svg.selectAll("circles").data(datafilter)
+            .enter()
+            .append("circle")
+                .transition()
+                .duration(1000)
+                .attr("cx",function(d,i){return logScalex(d.AverageCityMPG);})
+                .attr("cy",function(d,i) {return logScaley(d.AverageHighwayMPG);})
+                .attr("r",function(d,i) {return 2 + (d.EngineCylinders) * 1;})
+
+    d3.selectAll("circle")
+        .on("mouseover",mouseover)
+        .on("mouseout",mouseout)
+}
+
+// Dropdown listener
+d3.select("#selectButton").on("change", function(d){
+    var selectedGroup = d3.select(this).property("value")
+    update(selectedGroup)
+    updateannotation(selectedGroup)
+  })
+
+}
+</script>
+</body>
+</html>
