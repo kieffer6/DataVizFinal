@@ -1,2 +1,0 @@
-# DataVizFinal
-Final project repository
