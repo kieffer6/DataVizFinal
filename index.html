@@ -82,7 +82,7 @@ var mouseover = function(d) {
     tooltip
         .style("opacity",1)
         .style("left", (d3.mouse(this)[0]) + 20 + "px")
-        .style("top", (d3.mouse(this)[1]) + 150 + "px")
+        .style("top", (d3.mouse(this)[1]) + 100 + "px")
         .html("Make: " + d.Make + "<br />" + "Fuel type: " + d.Fuel + "<br />" + 
         "Hwy MPG: " + d.AverageHighwayMPG + "<br />" + "City MPG: " + d.AverageCityMPG)
         .transition()
@@ -95,6 +95,7 @@ var mouseover = function(d) {
 var mouseout = function(d) {
     tooltip
         .transition()
+        .duration(100)
         .style("opacity", 0)
 
     d3.select(this)
