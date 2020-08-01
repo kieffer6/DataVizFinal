@@ -9,11 +9,20 @@
 <body onload='init()'>
 
     <h1> <center>Finding Your Dream Car</center></h1>
-    <p1>&nbsp &nbsp &nbsp &nbsp When you are in the market for a car, the first thought that might go through your mind is
-        "I want to go fast."  In general, cars with more cylinders produce more power.  So you may think,
-        "I want as many cyinders as I can" until you see the fuel efficiency of said car. In general, 
-        cars with more cylinders are also less fuel efficient.
+    <p1>When you are in the market for a new car, fuel efficiency is often an
+        important consideration.  This narrative visualization will lead you through your car buying decision 
+        based on three key factors and their effects on fuel efficiency: engine cylinders, fuel type, and 
+        make / brand of car.  
     </p1>
+    <p2><br/><br/>In the scatterplot below, each circle represents a car and 
+        Average Highway MPG is plotted on the vertical axis and Average City MPG is plotted 
+        on the horizontal axis.  The radius of the circles is proportional to the number of cylinders in 
+        each car.
+        
+        <br/><br/>In general, more cylinders results in more power but less fuel efficiency.  
+        You can explore different cylinder options using the "Cylinder Selection" dropdown below.  
+        Hovering over individual circles will show specific information for each car.
+    </p2>
     <p></p>
     <p></p>
 
@@ -31,8 +40,8 @@
 <!-- graph div -->
 <div id="my_dataviz"></div>
 
-<p>Once you have selected how many cylinders you want in your dream car, 
-    click the "Next" button below to explore fuel types.</p>
+<p>Once you have an idea of how many cylinders you want in your dream car, 
+    click the "Next" button below to explore the effect fuel type on fuel efficiency.</p>
 
 <!-- slide advance -->
     &nbsp<button onclick="window.location.href='SecondSlide.html';">Next</button>
@@ -73,14 +82,25 @@ var mouseover = function(d) {
     tooltip
         .style("opacity",1)
         .style("left", (d3.mouse(this)[0]) + 20 + "px")
-        .style("top", (d3.mouse(this)[1]) + 50 + "px")
+        .style("top", (d3.mouse(this)[1]) + 150 + "px")
         .html("Make: " + d.Make + "<br />" + "Fuel type: " + d.Fuel + "<br />" + 
         "Hwy MPG: " + d.AverageHighwayMPG + "<br />" + "City MPG: " + d.AverageCityMPG)
+        .transition()
+
+    d3.select(this)
+        .style("fill", "orange")
+        .attr("r",function(d,i) {return 4 + d.EngineCylinders * 1;})
     }
 
 var mouseout = function(d) {
     tooltip
-      .style("opacity", 0)
+        .transition()
+        .style("opacity", 0)
+
+    d3.select(this)
+    .transition()
+        .style("fill", "lightblue")
+        .attr("r",function(d,i) {return 2 + d.EngineCylinders * 1;})
 }
 
 //Graph Annotation
@@ -91,8 +111,8 @@ var avgHywy = d3.mean(datafilter, function(d) {return +d.AverageHighwayMPG})
 
 var annotation = d3.select("#annotation")
     .style("opacity", 1)
-    .style("left", 550 + "px")
-    .style("top", 400 + "px")
+    .style("left", 600 + "px")
+    .style("top", 525 + "px")
     .attr("class", "annotation")
     .style("background-color", "lightblue")
     .style("border", "solid")
@@ -116,7 +136,6 @@ var annotation = d3.select("#annotation")
     .html("<strong> Averages of all cars"+ "<br />" + "with " + selectedGroup + " cylinders: </strong>" + "<br />" + "<br />" +
         "City MPG:    " + d3.format(",.0f")(avgCity)+ "<br />" +
         "Highway MPG: " + d3.format(",.0f")(avgHywy))
-
 }
 
 // List of cylinders for dropdown
@@ -190,6 +209,8 @@ function update(selectedGroup){
     //remove old datapoints
         svg.selectAll("circle")
         .data(data)
+        .transition()
+        .duration(1000)
         .remove()
 
     var datafilter = data.filter(function(d){return d.EngineCylinders == selectedGroup;})
@@ -199,6 +220,7 @@ function update(selectedGroup){
             .append("circle")
                 .transition()
                 .duration(1000)
+                .delay(500)
                 .attr("cx",function(d,i){return logScalex(d.AverageCityMPG);})
                 .attr("cy",function(d,i) {return logScaley(d.AverageHighwayMPG);})
                 .attr("r",function(d,i) {return 2 + (d.EngineCylinders) * 1;})
